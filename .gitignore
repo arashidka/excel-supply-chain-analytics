@@ -1,0 +1,7 @@
+data/raw/
+data/clean/
+data/synthetic/
+*.csv
+__pycache__/
+.venv/
+build/
