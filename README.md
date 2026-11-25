@@ -17,6 +17,11 @@ python scripts/clean.py data/raw/DataCoSupplyChainDataset.csv
 python scripts/build_workbook.py data/raw/DataCoSupplyChainDataset.csv
 python -m pytest tests                            # synthetic data; needs LibreOffice (soffice)
 ```
+## CI / "deployment"
+`.github/workflows/ci.yml` runs the tests (with LibreOffice) on every push/PR. To build the workbook in CI, run the
+workflow manually (Actions → CI → Run workflow) with `data_url` set to a direct link to the CSV; the workbook is
+uploaded as the `SupplyChain_Analytics` artifact. Confirm the data licence before sharing the artifact.
+
 Column names in `scripts/config.py` marked UNVERIFIED must be checked against the real header; `clean.py` fails if any is missing.
 
 ## Method (planned, item-level grain)
