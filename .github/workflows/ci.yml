@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      data_url:
+        description: "Direct download URL of DataCoSupplyChainDataset.csv (leave empty to only run tests)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-calc
+      - run: pip install -r requirements.txt
+      - run: python -m pytest tests -q
+
+  build-workbook:
+    needs: test
+    if: github.event_name == 'workflow_dispatch' && inputs.data_url != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Download source data (not committed to Git)
+        env:
+          DATA_URL: ${{ inputs.data_url }}
+        run: |
+          mkdir -p data/raw
+          curl -fsSL "$DATA_URL" -o data/raw/DataCoSupplyChainDataset.csv
+          python scripts/checksums.py data/raw/*.csv
+      - run: python scripts/clean.py data/raw/DataCoSupplyChainDataset.csv
+      - run: python scripts/build_workbook.py data/raw/DataCoSupplyChainDataset.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SupplyChain_Analytics
+          path: build/SupplyChain_Analytics.xlsx
+          if-no-files-found: error
